@@ -1,0 +1,13 @@
+<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+	<vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+		<text text="Menu View" font-size="4" />
+		<text text="~level-name" align="Center" font-size="7" bold="true" />
+	</vertical>
+
+	<vertical vertical-fit="PreferredSize" pad="2">
+		<action-button active="false" id="up-button" text="▲" event-click="request-list#PageUp" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+		<list id="request-list" visible-cells="6" select-cell="selected-request" />
+		<action-button active="false" id="down-button" text="▼" event-click="request-list#PageDown" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+	</vertical>
+</bg>

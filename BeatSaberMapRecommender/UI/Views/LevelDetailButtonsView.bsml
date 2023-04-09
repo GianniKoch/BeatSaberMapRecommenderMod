@@ -1,0 +1,6 @@
+﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+	xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
+	<horizontal horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='30' child-expand-width='false' anchor-pos-x='12' anchor-pos-y='20' child-align='UpperRight'>
+		<icon-button icon='BeatSaberMapRecommender.Icons.GianniButton.png' hover-hint='~highlight-button-hover' pad="1" pref-width='8' pref-height='8' on-click='toggle-recommender'/>
+	</horizontal>
+</bg>
