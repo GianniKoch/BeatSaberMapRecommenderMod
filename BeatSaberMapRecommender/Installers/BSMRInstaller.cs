@@ -8,7 +8,7 @@ namespace BeatSaberMapRecommender.Installers
 	{
 		public override void InstallBindings()
 		{
-			Container.Bind<BSMRMenuView>().FromNewComponentAsViewController().AsSingle();
+			Container.Bind<BSMRMenuViewController>().FromNewComponentAsViewController().AsSingle();
 			Container.BindInterfacesAndSelfTo<LevelDetailButtonViewController>().AsSingle();
 			Container.Bind<IInitializable>().To<BSMRFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
 		}

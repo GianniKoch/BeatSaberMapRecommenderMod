@@ -1,4 +1,6 @@
-﻿using BeatSaberMarkupLanguage;
+﻿using System.Threading.Tasks;
+using BeatSaberMarkupLanguage;
+using BeatSaberMarkupLanguage.Components;
 using HMUI;
 using IPA.Utilities;
 using SiraUtil.Logging;
@@ -14,15 +16,15 @@ namespace BeatSaberMapRecommender.UI.FlowCoordinators
 		private LevelDetailButtonViewController _levelDetailButtonViewController = null!;
 		private FlowCoordinator _parentFlowCoordinator = null!;
 		private MainFlowCoordinator _mainFlowCoordinator = null!;
-		private BSMRMenuView _bsmrMenuView = null!;
+		private BSMRMenuViewController _bsmrMenuViewController = null!;
 
 		[Inject]
-		protected void Construct(SiraLog siraLog, LevelDetailButtonViewController levelDetailButtonViewController, MainFlowCoordinator mainFlowCoordinator, BSMRMenuView bsmrMenuView)
+		protected void Construct(SiraLog siraLog, LevelDetailButtonViewController levelDetailButtonViewController, MainFlowCoordinator mainFlowCoordinator, BSMRMenuViewController bsmrMenuViewController)
 		{
 			_siraLog = siraLog;
 			_levelDetailButtonViewController = levelDetailButtonViewController;
 			_mainFlowCoordinator = mainFlowCoordinator;
-			_bsmrMenuView = bsmrMenuView;
+			_bsmrMenuViewController = bsmrMenuViewController;
 		}
 
 		protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
@@ -35,7 +37,7 @@ namespace BeatSaberMapRecommender.UI.FlowCoordinators
 
 			if (addedToHierarchy)
 			{
-				ProvideInitialViewControllers(_bsmrMenuView);
+				ProvideInitialViewControllers(_bsmrMenuViewController);
 			}
 		}
 
@@ -51,9 +53,13 @@ namespace BeatSaberMapRecommender.UI.FlowCoordinators
 
 		private void ButtonWasClicked(IPreviewBeatmapLevel level)
 		{
-			_bsmrMenuView.LevelName = level.songName;
 			_parentFlowCoordinator = _mainFlowCoordinator.YoungestChildFlowCoordinatorOrSelf();
 			_parentFlowCoordinator.PresentFlowCoordinator(this, animationDirection: ViewController.AnimationDirection.Vertical);
+
+			Task.Run(async () =>
+			{
+				await _bsmrMenuViewController.SelectLevel(level);
+			});
 		}
 
 		protected override void BackButtonWasPressed(ViewController topViewController)

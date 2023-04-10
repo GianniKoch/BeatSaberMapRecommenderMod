@@ -12,6 +12,7 @@ namespace BeatSaberMapRecommender
 		{
 
 			zenject.UseLogger();
+			zenject.UseHttpService();
 			zenject.Install<BSMRInstaller>(Location.Menu);
 		}
 	}
