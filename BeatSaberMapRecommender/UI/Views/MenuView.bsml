@@ -2,18 +2,7 @@
 	xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
 	<vertical>
 		<text text="~level-name" font-size="7" bold="true" align="Center"/>
-		<horizontal horizontal-fit="PreferredSize" spacing="4">
-			<vertical pref-width="64">
-<!--				<scrollable-container id="recommendations" spacing="0">-->
-					<list id="recommendation-list" visible-cells="6" select-cell="selected-list-item"/>
-<!--				</scrollable-container>-->
-<!--				<button text='Page Up' tags='PageUpFor:recommendations'/>-->
-<!--				<button text='Page Down' tags='PageDownFor:recommendations'/>-->
-<!--				<scroll-indicator tags='IndicatorFor:recommendations'/>-->
-			</vertical>
-			<vertical pref-width="64">
-				<text text="Details" font-size="6"/>
-			</vertical>
-		</horizontal>
+		<text id="txt-loading" text="Loading..." font-size="5" align="Center"/>
+		<list id="recommendation-list" visible-cells="8" select-cell="selected-list-item"/>
 	</vertical>
 </bg>

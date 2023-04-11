@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using System.Threading.Tasks;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using SiraUtil.Logging;
@@ -8,7 +7,7 @@ using Zenject;
 
 namespace BeatSaberMapRecommender.UI
 {
-	[HotReload(RelativePathToLayout = "")]
+	[HotReload]
 	public class LevelDetailButtonViewController : IInitializable
 	{
 		private readonly StandardLevelDetailViewController _standardLevelDetailViewController;

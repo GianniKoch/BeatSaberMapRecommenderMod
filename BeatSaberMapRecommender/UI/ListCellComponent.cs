@@ -9,7 +9,7 @@ namespace BeatSaberMapRecommender.UI
 		public string MapName { get; set; }
 		public string Mapper { get; set; }
 
-		public ListCellComponent(string key, string mapName, string mapper, Sprite icon) : base(mapName, mapper, icon)
+		internal ListCellComponent(string key, string mapName, string mapper, Sprite icon) : base(mapName, mapper, icon)
 		{
 			Key = key;
 			MapName = mapName;

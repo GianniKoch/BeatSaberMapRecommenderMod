@@ -33,8 +33,17 @@
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMLib.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+		<Reference Include="Hive.Versioning">
+			<HintPath>$(BeatSaberDir)\Libs\Hive.Versioning.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="Newtonsoft.Json">
-		  <HintPath>..\..\..\..\..\SteamLibrary\steamapps\common\Beat Saber\Beat Saber_Data\Managed\Newtonsoft.Json.dll</HintPath>
+			<HintPath>$(BeatSaberDir)\Libs\Newtonsoft.Json.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="BeatSaverSharp">
+			<HintPath>$(BeatSaberDir)\Libs\BeatSaverSharp.dll</HintPath>
+			<Private>False</Private>
 		</Reference>
 		<Reference Include="UnityEngine">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.dll</HintPath>
@@ -53,10 +62,12 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="UnityEngine.UI">
-		  <HintPath>..\..\..\..\..\SteamLibrary\steamapps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.UI.dll</HintPath>
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.UI.dll</HintPath>
+			<Private>False</Private>
 		</Reference>
 		<Reference Include="UnityEngine.UnityWebRequestModule">
-		  <HintPath>..\..\..\..\..\SteamLibrary\steamapps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+			<Private>False</Private>
 		</Reference>
 		<Reference Include="Zenject">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
@@ -74,10 +85,10 @@
 			<HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-        <Reference Include="SiraUtil">
-            <HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
+		<Reference Include="SiraUtil">
+			<HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
 		<Reference Include="HMUI">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMUI.dll</HintPath>
 			<Private>false</Private>
@@ -85,14 +96,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="manifest.json" />
-		<EmbeddedResource Include="UI\Views\*.bsml" />
-		<EmbeddedResource Include="Icons\*.png" />
+		<EmbeddedResource Include="manifest.json"/>
+		<EmbeddedResource Include="UI\Views\*.bsml"/>
+		<EmbeddedResource Include="Icons\*.png"/>
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />
-		<None Include="BeatSaberMapRecommender.csproj.user" Condition="Exists('BeatSaberMapRecommender.csproj.user')" />
+		<None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')"/>
+		<None Include="BeatSaberMapRecommender.csproj.user" Condition="Exists('BeatSaberMapRecommender.csproj.user')"/>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -100,7 +111,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="All" />
+		<PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="All"/>
 	</ItemGroup>
 
 </Project>
