@@ -41,9 +41,16 @@
 			<HintPath>$(BeatSaberDir)\Libs\Newtonsoft.Json.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="SongCore">
+			<HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="BeatSaverSharp">
 			<HintPath>$(BeatSaberDir)\Libs\BeatSaverSharp.dll</HintPath>
 			<Private>False</Private>
+		</Reference>
+		<Reference Include="System.IO.Compression">
+		  <HintPath>..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_MSIL\System.IO.Compression\v4.0_4.0.0.0__b77a5c561934e089\System.IO.Compression.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.dll</HintPath>
@@ -96,14 +103,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="manifest.json"/>
-		<EmbeddedResource Include="UI\Views\*.bsml"/>
-		<EmbeddedResource Include="Icons\*.png"/>
+		<EmbeddedResource Include="manifest.json" />
+		<EmbeddedResource Include="UI\Views\*.bsml" />
+		<EmbeddedResource Include="Icons\*.png" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')"/>
-		<None Include="BeatSaberMapRecommender.csproj.user" Condition="Exists('BeatSaberMapRecommender.csproj.user')"/>
+		<None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />
+		<None Include="BeatSaberMapRecommender.csproj.user" Condition="Exists('BeatSaberMapRecommender.csproj.user')" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -111,7 +118,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="All"/>
+		<PackageReference Include="PropertyChanged.Fody" Version="4.1.0" PrivateAssets="All" />
 	</ItemGroup>
 
 </Project>
