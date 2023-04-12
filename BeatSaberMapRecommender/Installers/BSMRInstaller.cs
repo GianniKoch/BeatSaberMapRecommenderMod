@@ -19,6 +19,7 @@ namespace BeatSaberMapRecommender.Installers
 		{
 			Container.BindInstance(_beatSaver).AsSingle();
 			Container.Bind<BeatSaverService>().AsSingle();
+			Container.Bind<BSMRService>().AsSingle();
 			Container.Bind<BSMRMenuViewController>().FromNewComponentAsViewController().AsSingle();
 			Container.BindInterfacesAndSelfTo<LevelDetailButtonViewController>().AsSingle();
 			Container.Bind<IInitializable>().To<BSMRFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
