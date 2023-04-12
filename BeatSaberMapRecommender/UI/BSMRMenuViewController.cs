@@ -14,7 +14,9 @@ using Newtonsoft.Json;
 using SiraUtil.Logging;
 using SiraUtil.Web;
 using UnityEngine;
+using UnityEngine.UI;
 using Zenject;
+using Logger = IPA.Logging.Logger;
 
 namespace BeatSaberMapRecommender.UI
 {
@@ -23,6 +25,7 @@ namespace BeatSaberMapRecommender.UI
 	public class BSMRMenuViewController : BSMLAutomaticViewController
 	{
 		private const string RECOMMENDATION_URL = "https://api-beatsavermaprecommender.belgianbeatsaber.community";
+		private const int NUMBER_OF_CELLS = 6;
 
 		private SiraLog _siraLog = null!;
 		private IHttpService _httpService = null!;
@@ -35,9 +38,12 @@ namespace BeatSaberMapRecommender.UI
 
 		public event Action<RecommendationMap>? ListItemWasClicked;
 		[UIValue("level-name")] protected string LevelName { get; set; } = null!;
-
 		[UIComponent("recommendation-list")] protected readonly CustomListTableData RecommendationList = null!;
 		[UIComponent("txt-loading")] protected readonly FormattableText LoadingText = null!;
+		[UIComponent("btn-up")] protected readonly Button UpButton = null!;
+		[UIComponent("btn-down")] protected readonly Button DownButton = null!;
+
+		private int _page;
 
 
 		[Inject]
@@ -55,45 +61,58 @@ namespace BeatSaberMapRecommender.UI
 		{
 			LevelName = $"Recommendations for {level.songName}";
 			LoadingText.enabled = true;
+			_page = 0;
 			RecommendationList.data.Clear();
 			RecommendationList.tableView.ReloadData();
 
-			var recommendationItems = await GetRecommendationItems(level.levelID);
-			if (recommendationItems == null)
-			{
-				_siraLog.Error("Failed to get recommendations");
-				return;
-			}
+			await LoadRecommendationItems(level.levelID);
+
+			await UpdateListItems();
+		}
+
+		private async Task UpdateListItems()
+		{
+
+			var cells = _items.Skip(_page * NUMBER_OF_CELLS).Take(NUMBER_OF_CELLS).ToList();
+
 
 			await UnityMainThreadTaskScheduler.Factory.StartNew(async () =>
 			{
-				var cellComponents = await ConvertToCellComponents(recommendationItems);
-				RecommendationList.data.AddRange(cellComponents);
+				var cellComponents = await ConvertToCellComponents(cells);
+
 				LoadingText.enabled = false;
+				RecommendationList.data.Clear();
+				RecommendationList.data.AddRange(cellComponents);
 				RecommendationList.tableView.ReloadData();
+
+				//Update buttons
+				UpButton.interactable = _page != 0;
+
+				var maxPages = _items.Count / NUMBER_OF_CELLS;
+				DownButton.interactable = _page < maxPages;
 			});
 		}
 
-		private async Task<List<RecommendationMap>?> GetRecommendationItems(string levelId)
+		private async Task LoadRecommendationItems(string levelId)
 		{
 			var songInfo = await _beatSaverService.GetSongInfoFromLevelId(levelId);
 
 			if (songInfo == null)
 			{
 				_siraLog.Error($"Failed to get song info from level id {levelId}");
-				return null;
+				return;
 			}
 
 			var (songId, difficulty, characteristic) = songInfo.Value;
 
 			//TODO: move to service!!! qyuickk! don't telleris
 			var request = await _httpService.GetAsync(
-				$"{RECOMMENDATION_URL}/recommendation?song_id={songId}&difficulty={difficulty}&characteristic={characteristic}&n_recommendations=20&n_best_tags=4");
+				$"{RECOMMENDATION_URL}/recommendation?song_id={songId}&difficulty={difficulty}&characteristic={characteristic}&n_recommendations=60&n_best_tags=4");
 
 			if (!request.Successful)
 			{
 				_siraLog.Error("Failed to get recommendations");
-				return null;
+				return;
 			}
 
 			using var response = await request.ReadAsStreamAsync();
@@ -102,34 +121,19 @@ namespace BeatSaberMapRecommender.UI
 
 			foreach (var item in _jsonSerializer!.Deserialize<List<RecommendationMapDto>>(jsonReader)!)
 			{
-				var mapInfo = await _beatSaverService.GetMapInfoFromKey(item.SongId);
-				if (mapInfo == null)
-				{
-					continue;
-				}
-
-				var (mapName, mapper, coverUrl, hash) = mapInfo.Value;
-
-				var level = TryGetLevel(hash);
-				if (level == null)
-				{
-					continue;
-				}
-
-				var recommendationMap = new RecommendationMap(item, mapName, mapper, coverUrl, level);
+				var recommendationMap = new RecommendationMap(item);
 				_items.Add(recommendationMap);
 			}
 
-			_items = _items.GroupBy(x => x.SongId).Select(x => x.First()).ToList();
-
-			return _items;
+			_items = _items.GroupBy(x => x.SongKey).Select(x => x.First()).ToList();
 		}
 
 		// Credit: Auros
 		public IPreviewBeatmapLevel? TryGetLevel(string hash, bool wip = false)
 		{
 			var cleanerHash = $"custom_level_{hash.ToUpper()}";
-			return _beatMapLevelsModel.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.SelectMany(bm => bm.beatmapLevelCollection.beatmapLevels).FirstOrDefault(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash);
+			return _beatMapLevelsModel.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.SelectMany(bm => bm.beatmapLevelCollection.beatmapLevels)
+				.FirstOrDefault(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash);
 		}
 
 		//TODO: add map downloading but should be only when player clicks map.
@@ -176,7 +180,7 @@ namespace BeatSaberMapRecommender.UI
 			foreach (var recommendation in recommendationMap)
 			{
 				var sprite = await LoadSpriteAsync(recommendation.CoverUrl);
-				listCellComponents.Add(new ListCellComponent(recommendation.SongId, recommendation.MapName, recommendation.Mapper, sprite));
+				listCellComponents.Add(new ListCellComponent(recommendation.SongKey, recommendation.MapName, recommendation.Mapper, sprite));
 			}
 
 			return listCellComponents;
@@ -215,18 +219,52 @@ namespace BeatSaberMapRecommender.UI
 		}
 
 		[UIAction("selected-list-item")]
-		public void SelectedListItem(TableView _, int index)
+		public async Task SelectedListItem(TableView _, int index)
 		{
 			var item = _items[index];
-
 			if (item == null)
 			{
 				return;
 			}
 
+			var hash = await _beatSaverService.GetMapInfoFromKey(item.SongKey);
+			if(hash == null)
+			{
+				return;
+			}
+
+			var level = TryGetLevel(hash);
+			if (level == null)
+			{
+				return;
+			}
+
+			item.Level = level;
+
 			ListItemWasClicked?.Invoke(item);
 
 			_siraLog.Info($"Selected list item {index}");
+		}
+
+		[UIAction("page-down")]
+		public async Task PageDown()
+		{
+			var maxPages = _items.Count / NUMBER_OF_CELLS;
+			if (_page < maxPages)
+			{
+				_page++;
+				await UpdateListItems();
+			}
+		}
+
+		[UIAction("page-up")]
+		public async Task PageUp()
+		{
+			if (_page > 0)
+			{
+				_page--;
+				await UpdateListItems();
+			}
 		}
 	}
 }

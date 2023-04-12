@@ -34,23 +34,19 @@ namespace BeatSaberMapRecommender.Services
 			return (songId, difficulty.ToString(), characteristic.ToString());
 		}
 
-		public async Task<(string, string, string, string)?> GetMapInfoFromKey(string itemSongId)
+		public async Task<string?> GetMapInfoFromKey(string itemSongKey)
 		{
-			//Todo: change songId to songKey
-			var beatMap = await _beatSaver.Beatmap(itemSongId);
+			var beatMap = await _beatSaver.Beatmap(itemSongKey);
 
 			if (beatMap == null)
 			{
-				_siraLog.Error($"No beatmap found with id {itemSongId}");
+				_siraLog.Error($"No beatmap found with key {itemSongKey}");
 				return null;
 			}
 
-			var mapName = beatMap.Name;
-			var mapper = beatMap.Metadata.LevelAuthorName;
-			var coverUrl = beatMap.LatestVersion.CoverURL;
 			var hash = beatMap.LatestVersion.Hash;
 
-			return (mapName, mapper, coverUrl, hash);
+			return (hash);
 		}
 	}
 }

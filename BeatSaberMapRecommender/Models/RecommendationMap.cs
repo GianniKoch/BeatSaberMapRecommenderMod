@@ -1,21 +1,18 @@
-﻿using Newtonsoft.Json;
-
-namespace BeatSaberMapRecommender.Models
+﻿namespace BeatSaberMapRecommender.Models
 {
 	public class RecommendationMap
 	{
-		public RecommendationMap(RecommendationMapDto dto, string mapName, string mapper, string coverUrl, IPreviewBeatmapLevel level)
+		public RecommendationMap(RecommendationMapDto dto)
 		{
-			MapName = mapName;
-			Mapper = mapper;
-			CoverUrl = coverUrl;
 			Characteristic = dto.Characteristic;
 			Difficulty = dto.Difficulty;
 			MetaSim = dto.MetaSim;
-			SongId = dto.SongId;
+			SongKey = dto.SongKey;
 			TagSim = dto.TagSim;
 			TotalSim = dto.TotalSim;
-			Level = level;
+			MapName = dto.MapName;
+			Mapper = dto.Uploader;
+			CoverUrl = dto.CoverUrl;
 		}
 
 		public int? Characteristic { get; }
@@ -24,18 +21,18 @@ namespace BeatSaberMapRecommender.Models
 
 		public double? MetaSim { get; }
 
-		public string SongId { get; }
+		public string SongKey { get; }
 
 		public double? TagSim { get; }
 
 		public double? TotalSim { get; }
 
-		public string MapName { get; }
+		public string MapName { get; set; }
 
-		public string Mapper { get; }
+		public string Mapper { get; set; }
 
-		public string CoverUrl { get; }
+		public string CoverUrl { get; set; }
 
-		public IPreviewBeatmapLevel Level { get; set; }
+		public IPreviewBeatmapLevel? Level { get; set; }
 	}
 }
