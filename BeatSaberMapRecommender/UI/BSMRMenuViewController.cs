@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using BeatSaberMapRecommender.Models;
 using BeatSaberMapRecommender.Services;
@@ -62,6 +66,8 @@ namespace BeatSaberMapRecommender.UI
 			LevelName = $"Recommendations for {level.songName}";
 			LoadingText.enabled = true;
 			_page = 0;
+			_items.Clear();
+
 			RecommendationList.data.Clear();
 			RecommendationList.tableView.ReloadData();
 
@@ -72,7 +78,6 @@ namespace BeatSaberMapRecommender.UI
 
 		private async Task UpdateListItems()
 		{
-
 			var cells = _items.Skip(_page * NUMBER_OF_CELLS).Take(NUMBER_OF_CELLS).ToList();
 
 
@@ -107,7 +112,7 @@ namespace BeatSaberMapRecommender.UI
 
 			//TODO: move to service!!! qyuickk! don't telleris
 			var request = await _httpService.GetAsync(
-				$"{RECOMMENDATION_URL}/recommendation?song_id={songId}&difficulty={difficulty}&characteristic={characteristic}&n_recommendations=60&n_best_tags=4");
+				$"{RECOMMENDATION_URL}/recommendation?song_id={songId}&difficulty={difficulty}&characteristic={characteristic}&n_recommendations=100&n_best_tags=4");
 
 			if (!request.Successful)
 			{
@@ -119,13 +124,19 @@ namespace BeatSaberMapRecommender.UI
 			using var reader = new StreamReader(response);
 			using var jsonReader = new JsonTextReader(reader);
 
-			foreach (var item in _jsonSerializer!.Deserialize<List<RecommendationMapDto>>(jsonReader)!)
-			{
-				var recommendationMap = new RecommendationMap(item);
-				_items.Add(recommendationMap);
-			}
+			var items = _jsonSerializer!.Deserialize<List<RecommendationMapDto>>(jsonReader)!.Select(item => new RecommendationMap(item)).ToList();
 
-			_items = _items.GroupBy(x => x.SongKey).Select(x => x.First()).ToList();
+			_items.Clear();
+			_items.AddRange(items.GroupBy(x => x.SongKey).Select(x => x.First()).ToList());
+		}
+
+		// Credit: Auros
+		public bool LevelIsInstalled(string hash, bool wip = false)
+		{
+			string cleanerHash = $"custom_level_{hash.ToUpper()}";
+			bool levelExists = _beatMapLevelsModel.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.Any(bm =>
+				bm.beatmapLevelCollection.beatmapLevels.Any(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash));
+			return levelExists;
 		}
 
 		// Credit: Auros
@@ -136,43 +147,88 @@ namespace BeatSaberMapRecommender.UI
 				.FirstOrDefault(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash);
 		}
 
-		//TODO: add map downloading but should be only when player clicks map.
-		// // Credit: Auros
-		// public async Task<IPreviewBeatmapLevel?> DownloadLevel(string name, string hash, string url, State state, CancellationToken token, IProgress<float>? downloadProgress = null)
-		// {
-		// 	var response = await _httpService.GetAsync(url, downloadProgress, token);
-		// 	if (!response.Successful)
-		// 	{
-		// 		_siraLog.Error(response.Code);
-		// 		return null;
-		// 	}
-		//
-		// 	// Songcore doesn't have a constant for the WIP folder and does the same Path.Combine to access that folder
-		// 	var extractPath = await ExtractZipAsync(await response.ReadAsByteArrayAsync(), name, state == State.Published ? CustomLevelPathHelper.customLevelsDirectoryPath : Path.Combine(Application.dataPath, "CustomWIPLevels"));
-		// 	if (string.IsNullOrEmpty(extractPath))
-		// 		return null;
-		//
-		// 	// Eris's black magic 🙏
-		// 	var semaphoreSlim = new SemaphoreSlim(0, 1);
-		// 	void Release(SongCore.Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
-		// 	{
-		// 		SongCore.Loader.SongsLoadedEvent -= Release;
-		// 		semaphoreSlim?.Release();
-		// 	}
-		// 	try
-		// 	{
-		// 		SongCore.Loader.SongsLoadedEvent += Release;
-		// 		SongCore.Loader.Instance.RefreshSongs(false);
-		// 		await semaphoreSlim.WaitAsync(CancellationToken.None);
-		// 	}
-		// 	catch (Exception e)
-		// 	{
-		// 		Release(null!, null!);
-		// 		_siraLog.Error(e);
-		// 		return null;
-		// 	}
-		// 	return TryGetLevel(hash, state != State.Published);
-		// }
+		// Credit: Auros
+		public async Task<string?> DownloadLevel(string name, string hash, string url)
+		{
+			var response = await _httpService.GetAsync(url);
+			if (!response.Successful)
+			{
+				_siraLog.Error(response.Code);
+				return null;
+			}
+
+			var extractPath = await ExtractZipAsync(await response.ReadAsByteArrayAsync(), name, CustomLevelPathHelper.customLevelsDirectoryPath);
+			if (string.IsNullOrEmpty(extractPath))
+			{
+				return null;
+			}
+
+			// Eris's black magic 🙏
+			var semaphoreSlim = new SemaphoreSlim(0, 1);
+
+			void Release(SongCore.Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
+			{
+				SongCore.Loader.SongsLoadedEvent -= Release;
+				semaphoreSlim?.Release();
+			}
+
+			try
+			{
+				SongCore.Loader.SongsLoadedEvent += Release;
+				SongCore.Loader.Instance.RefreshSongs(false);
+				await semaphoreSlim.WaitAsync(CancellationToken.None);
+			}
+			catch (Exception e)
+			{
+				Release(null!, null!);
+				_siraLog.Error(e);
+				return null;
+			}
+
+			return hash;
+		}
+
+		private async Task<string> ExtractZipAsync(byte[] zip, string name, string customSongsPath, bool overwrite = false)
+		{
+			Stream zipStream = new MemoryStream(zip);
+			try
+			{
+				string regexSearch = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+				Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
+
+				ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+				string basePath = name;
+				string path = customSongsPath + "/" + r.Replace(basePath, "");
+				;
+				if (!overwrite && Directory.Exists(path))
+				{
+					int pathNum = 1;
+					while (Directory.Exists(path + $" ({pathNum})")) ++pathNum;
+					path += $" ({pathNum})";
+				}
+
+				if (!Directory.Exists(path))
+					Directory.CreateDirectory(path);
+				await Task.Run(() =>
+				{
+					foreach (var entry in archive.Entries)
+					{
+						var entryPath = Path.Combine(path, entry.Name);
+						if (overwrite || !File.Exists(entryPath))
+							entry.ExtractToFile(entryPath, overwrite);
+					}
+				}).ConfigureAwait(false);
+				archive.Dispose();
+				zipStream.Close();
+				return path;
+			}
+			catch (Exception e)
+			{
+				_siraLog.Error(e);
+				zipStream.Close();
+				return "";
+			}
+		}
 
 		private async Task<IEnumerable<ListCellComponent>> ConvertToCellComponents(List<RecommendationMap> recommendationMap)
 		{
@@ -227,10 +283,30 @@ namespace BeatSaberMapRecommender.UI
 				return;
 			}
 
-			var hash = await _beatSaverService.GetMapInfoFromKey(item.SongKey);
-			if(hash == null)
+			var mapInfo = await _beatSaverService.GetMapInfoFromKey(item.SongKey);
+			if (mapInfo == null)
 			{
 				return;
+			}
+
+			var (hash, downloadUrl) = mapInfo.Value;
+			if (hash == null)
+			{
+				return;
+			}
+
+			if (!LevelIsInstalled(hash))
+			{
+				_siraLog.Info($"Downloading map {item.MapName}");
+				// await download map
+				hash = await DownloadLevel($"{item.SongKey} ({item.MapName} - {item.Mapper})", hash, downloadUrl);
+				if (hash == null)
+				{
+					_siraLog.Error($"Error while downloading map {item.MapName}");
+					return;
+				}
+
+				_siraLog.Info($"Successfully downloaded map {item.MapName}");
 			}
 
 			var level = TryGetLevel(hash);

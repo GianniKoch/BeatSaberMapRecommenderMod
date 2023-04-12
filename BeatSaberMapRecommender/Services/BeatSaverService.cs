@@ -34,7 +34,7 @@ namespace BeatSaberMapRecommender.Services
 			return (songId, difficulty.ToString(), characteristic.ToString());
 		}
 
-		public async Task<string?> GetMapInfoFromKey(string itemSongKey)
+		public async Task<(string, string)?> GetMapInfoFromKey(string itemSongKey)
 		{
 			var beatMap = await _beatSaver.Beatmap(itemSongKey);
 
@@ -45,8 +45,9 @@ namespace BeatSaberMapRecommender.Services
 			}
 
 			var hash = beatMap.LatestVersion.Hash;
+			var downloadUrl = beatMap.LatestVersion.DownloadURL;
 
-			return (hash);
+			return (hash, downloadUrl);
 		}
 	}
 }
