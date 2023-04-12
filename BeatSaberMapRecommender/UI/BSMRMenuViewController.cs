@@ -119,7 +119,7 @@ namespace BeatSaberMapRecommender.UI
 		[UIAction("selected-list-item")]
 		public async Task SelectedListItem(TableView _, int index)
 		{
-			var item = _items[index];
+			var item = _items[_page * NUMBER_OF_CELLS + index];
 			if (item == null)
 			{
 				return;
