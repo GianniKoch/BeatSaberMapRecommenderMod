@@ -3,6 +3,8 @@
 	<vertical>
 		<text text="~level-name" font-size="7" bold="true" align="Center"/>
 		<text id="txt-loading" text="Loading..." font-size="5" align="Center"/>
-		<list id="recommendation-list" visible-cells="8" select-cell="selected-list-item"/>
+		<action-button id="btn-up" text="▲" on-click="page-up" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+		<list id="recommendation-list" visible-cells="6" select-cell="selected-list-item"/>
+		<action-button id="btn-down" text="▼" on-click="page-down" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
 	</vertical>
 </bg>
