@@ -62,13 +62,13 @@ namespace BeatSaberMapRecommender.UI.FlowCoordinators
 		protected void Start()
 		{
 			_levelDetailButtonViewController.WasClicked += ButtonWasClicked;
-			_bsmrMenuViewController.ListItemWasClicked += ListItemWasClicked;
+			_bsmrMenuViewController.PlayRecommendationWasClicked += PlayRecommendationWasClicked;
 		}
 
 		protected void OnDestroy()
 		{
 			_levelDetailButtonViewController.WasClicked -= ButtonWasClicked;
-			_bsmrMenuViewController.ListItemWasClicked -= ListItemWasClicked;
+			_bsmrMenuViewController.PlayRecommendationWasClicked -= PlayRecommendationWasClicked;
 		}
 
 		private void ButtonWasClicked(IPreviewBeatmapLevel level)
@@ -82,7 +82,7 @@ namespace BeatSaberMapRecommender.UI.FlowCoordinators
 			});
 		}
 
-		private void ListItemWasClicked(RecommendationMap map)
+		private void PlayRecommendationWasClicked(RecommendationMap map)
 		{
 			// Credit: Auros
 			_parentFlowCoordinator.DismissFlowCoordinator(this, () =>
