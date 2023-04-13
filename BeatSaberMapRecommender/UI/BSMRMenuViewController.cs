@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BeatSaberMapRecommender.Models;
 using BeatSaberMapRecommender.Services;
+using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
@@ -11,6 +12,8 @@ using HMUI;
 using IPA.Utilities.Async;
 using SiraUtil.Logging;
 using SiraUtil.Web;
+using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
@@ -27,17 +30,26 @@ namespace BeatSaberMapRecommender.UI
 		private BeatSaverService _beatSaverService = null!;
 		private BSMRService _bsmrService = null!;
 
-		private List<RecommendationMap> _items = new List<RecommendationMap>();
-
-		public event Action<RecommendationMap>? ListItemWasClicked;
+		public event Action<RecommendationMap>? PlayRecommendationWasClicked;
 		[UIValue("level-name")] protected string LevelName { get; set; } = null!;
 		[UIComponent("recommendation-list")] protected readonly CustomListTableData RecommendationList = null!;
-		[UIComponent("txt-loading")] protected readonly FormattableText LoadingText = null!;
 		[UIComponent("btn-up")] protected readonly Button UpButton = null!;
 		[UIComponent("btn-down")] protected readonly Button DownButton = null!;
 
-		private int _page;
+		[UIComponent("img-map-logo")] protected readonly ImageView MapLogoImage = null!;
+		[UIComponent("txt-map-name")] protected readonly CurvedTextMeshPro MapNameText = null!;
+		[UIComponent("txt-map-author")] protected readonly CurvedTextMeshPro MapAuthorText = null!;
+		[UIComponent("txt-map-description")] protected readonly CurvedTextMeshPro MapDescriptionText = null!;
+		[UIComponent("txt-tags")] protected readonly CurvedTextMeshPro TagsText = null!;
+		[UIComponent("txt-meta-data")] protected readonly CurvedTextMeshPro MetaDataText = null!;
+		[UIComponent("btn-play")] protected readonly Button PlayButton = null!;
+		[UIComponent("btn-sort-total")] protected readonly Button SortTotalButton = null!;
+		[UIComponent("btn-sort-tag")] protected readonly Button SortTagButton = null!;
+		[UIComponent("btn-sort-meta")] protected readonly Button SortMetaButton = null!;
 
+		private int _page;
+		private List<RecommendationMap> _items = new List<RecommendationMap>();
+		private RecommendationMap? _selectedItem;
 
 		[Inject]
 		public void Construct(SiraLog siraLog, IHttpService httpService, BeatSaverService beatSaverService, BSMRService bsmrService)
@@ -52,9 +64,12 @@ namespace BeatSaberMapRecommender.UI
 		public async Task SelectLevel(IPreviewBeatmapLevel level)
 		{
 			LevelName = $"Recommendations for {level.songName}";
-			LoadingText.enabled = true;
 			_page = 0;
 			_items.Clear();
+
+			SortTotalButton.interactable = false;
+			SortTagButton.interactable = true;
+			SortMetaButton.interactable = true;
 
 			RecommendationList.data.Clear();
 			RecommendationList.tableView.ReloadData();
@@ -62,6 +77,8 @@ namespace BeatSaberMapRecommender.UI
 			await LoadRecommendationItems(level.levelID);
 
 			await UpdateListItems();
+
+			await LoadDetails();
 		}
 
 		private async Task UpdateListItems()
@@ -73,7 +90,6 @@ namespace BeatSaberMapRecommender.UI
 			{
 				var cellComponents = await ConvertToCellComponents(cells);
 
-				LoadingText.enabled = false;
 				RecommendationList.data.Clear();
 				RecommendationList.data.AddRange(cellComponents);
 				RecommendationList.tableView.ReloadData();
@@ -119,53 +135,46 @@ namespace BeatSaberMapRecommender.UI
 		[UIAction("selected-list-item")]
 		public async Task SelectedListItem(TableView _, int index)
 		{
-			var item = _items[_page * NUMBER_OF_CELLS + index];
-			if (item == null)
+			_selectedItem = _items[_page * NUMBER_OF_CELLS + index];
+			await LoadDetails();
+		}
+
+		private async Task LoadDetails()
+		{
+			PlayButton.enabled = false;
+			PlayButton.SetButtonText("Play");
+			MapNameText.text = string.Empty;
+			MapAuthorText.text = string.Empty;
+			MapDescriptionText.text = string.Empty;
+			TagsText.text = string.Empty;
+			MetaDataText.text = string.Empty;
+
+			if (_selectedItem == null)
 			{
 				return;
 			}
 
-			var mapInfo = await _beatSaverService.GetMapInfoFromKey(item.SongKey);
-			if (mapInfo == null)
+			var beatMap = await _beatSaverService.GetBeatMapFromKey(_selectedItem.SongKey);
+			if (beatMap == null)
 			{
 				return;
 			}
 
-			var (hash, downloadUrl) = mapInfo.Value;
-			if (hash == null)
-			{
-				return;
-			}
-
-			if (!_bsmrService.LevelIsInstalled(hash))
-			{
-				_siraLog.Info($"Downloading map {item.MapName}");
-				// await download map
-				hash = await _bsmrService.DownloadLevel($"{item.SongKey} ({item.MapName} - {item.Mapper})", hash, downloadUrl);
-				if (hash == null)
-				{
-					_siraLog.Error($"Error while downloading map {item.MapName}");
-					return;
-				}
-
-				_siraLog.Info($"Successfully downloaded map {item.MapName}");
-			}
-
-			var level = _bsmrService.TryGetLevel(hash);
-			if (level == null)
-			{
-				return;
-			}
-
-			item.Level = level;
-
-			ListItemWasClicked?.Invoke(item);
-
-			_siraLog.Info($"Selected list item {index}");
+			PlayButton.interactable = true;
+			PlayButton.enabled = true;
+			MapLogoImage.sprite = await _bsmrService.LoadSpriteAsync(beatMap.LatestVersion.CoverURL);
+			MapNameText.text = beatMap.Metadata.SongName;
+			MapAuthorText.text = beatMap.Metadata.LevelAuthorName;
+			MapDescriptionText.text = beatMap.Description;
+			MapDescriptionText.overflowMode = TextOverflowModes.Truncate;
+			TagsText.text = "Tags : " + string.Join(", ", beatMap.Tags);
+			MetaDataText.text =
+				$"Similarity: {_selectedItem.TotalSim!*100:f1}% (T: {_selectedItem.TagSim!*100:f1}% M: {_selectedItem.MetaSim!*100:f1}%)";
+			// MetaDataText.text = $"Test";
 		}
 
 		[UIAction("page-down")]
-		public async Task PageDown()
+		public async Task OnPageDownClick()
 		{
 			var maxPages = _items.Count / NUMBER_OF_CELLS;
 			if (_page < maxPages)
@@ -176,13 +185,92 @@ namespace BeatSaberMapRecommender.UI
 		}
 
 		[UIAction("page-up")]
-		public async Task PageUp()
+		public async Task OnPageUpClick()
 		{
 			if (_page > 0)
 			{
 				_page--;
 				await UpdateListItems();
 			}
+		}
+
+		[UIAction("play")]
+		public async Task OnPlayClick()
+		{
+			if (_selectedItem == null)
+			{
+				return;
+			}
+
+			var beatMap = await _beatSaverService.GetBeatMapFromKey(_selectedItem.SongKey);
+			if (beatMap == null)
+			{
+				return;
+			}
+
+			var hash = beatMap.LatestVersion.Hash;
+
+			if (!_bsmrService.LevelIsInstalled(hash))
+			{
+				PlayButton.interactable = false;
+				PlayButton.SetButtonText("Downloading...");
+				_siraLog.Info($"Downloading map {_selectedItem.MapName}");
+
+				var downloadUrl = beatMap.LatestVersion.DownloadURL;
+				hash = await _bsmrService.DownloadLevel($"{_selectedItem.SongKey} ({_selectedItem.MapName} - {_selectedItem.Mapper})", hash, downloadUrl);
+				if (hash == null)
+				{
+					_siraLog.Error($"Error while downloading map {_selectedItem.MapName}");
+					return;
+				}
+
+				_siraLog.Info($"Successfully downloaded map {_selectedItem.MapName}");
+				PlayButton.interactable = true;
+				PlayButton.SetButtonText("Downloaded!");
+			}
+
+			var level = _bsmrService.TryGetLevel(hash);
+			if (level == null)
+			{
+				return;
+			}
+
+			_selectedItem.Level = level;
+
+			PlayRecommendationWasClicked?.Invoke(_selectedItem);
+		}
+
+		[UIAction("sort-total")]
+		public async Task OnSortTotalClick()
+		{
+			_page = 0;
+			_items = _items.OrderByDescending(x => x.TotalSim).ToList();
+			await UpdateListItems();
+			SortTotalButton.interactable = false;
+			SortTagButton.interactable = true;
+			SortMetaButton.interactable = true;
+		}
+
+		[UIAction("sort-tag")]
+		public async Task OnSortTagClick()
+		{
+			_page = 0;
+			_items = _items.OrderByDescending(x => x.TagSim).ToList();
+			await UpdateListItems();
+			SortTotalButton.interactable = true;
+			SortTagButton.interactable = false;
+			SortMetaButton.interactable = true;
+		}
+
+		[UIAction("sort-meta")]
+		public async Task OnSortMetaClick()
+		{
+			_page = 0;
+			_items = _items.OrderByDescending(x => x.MetaSim).ToList();
+			await UpdateListItems();
+			SortTotalButton.interactable = true;
+			SortTagButton.interactable = true;
+			SortMetaButton.interactable = false;
 		}
 	}
 }

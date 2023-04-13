@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using BeatSaverSharp;
+using BeatSaverSharp.Models;
 using SiraUtil.Logging;
 namespace BeatSaberMapRecommender.Services
 {
@@ -34,7 +35,7 @@ namespace BeatSaberMapRecommender.Services
 			return (songId, difficulty.ToString(), characteristic.ToString());
 		}
 
-		public async Task<(string, string)?> GetMapInfoFromKey(string itemSongKey)
+		public async Task<Beatmap?> GetBeatMapFromKey(string itemSongKey)
 		{
 			var beatMap = await _beatSaver.Beatmap(itemSongKey);
 
@@ -44,10 +45,7 @@ namespace BeatSaberMapRecommender.Services
 				return null;
 			}
 
-			var hash = beatMap.LatestVersion.Hash;
-			var downloadUrl = beatMap.LatestVersion.DownloadURL;
-
-			return (hash, downloadUrl);
+			return beatMap;
 		}
 	}
 }

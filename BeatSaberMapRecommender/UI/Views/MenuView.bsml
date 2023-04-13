@@ -1,10 +1,34 @@
 <bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
-	<vertical>
+	<vertical horizontal-fit="PreferredSize" spacing="2">
 		<text text="~level-name" font-size="7" bold="true" align="Center"/>
-		<text id="txt-loading" text="Loading..." font-size="5" align="Center"/>
-		<action-button id="btn-up" text="▲" on-click="page-up" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
-		<list id="recommendation-list" visible-cells="6" select-cell="selected-list-item"/>
-		<action-button id="btn-down" text="▼" on-click="page-down" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+		<horizontal>
+			<vertical pref-width="60">
+				<horizontal>
+					<action-button id="btn-sort-total" text="Sort on total sim" font-size="2" italics="false" on-click="sort-total" pref-width="20" pref-height="5" interactable="false"/>
+					<action-button id="btn-sort-tag" text="Sort on tag sim" font-size="2" italics="false" on-click="sort-tag" pref-width="18" pref-height="5"/>
+					<action-button id="btn-sort-meta" text="Sort on meta sim" font-size="2" italics="false" on-click="sort-meta" pref-width="18" pref-height="5"/>
+				</horizontal>
+				<action-button id="btn-up" text="▲" on-click="page-up" pref-width="50" pref-height="8" italics="false" interactable="false"/>
+				<list id="recommendation-list" visible-cells="6" select-cell="selected-list-item"/>
+				<action-button id="btn-down" text="▼" on-click="page-down" pref-width="50" pref-height="8" italics="false" interactable="false"/>
+			</vertical>
+			<vertical pref-width="8"/>
+			<vertical pref-width="60" pref-height="70" child-expand-height='false'>
+				<horizontal pref-height="24">
+					<img id="img-map-logo" preserve-aspect="true" pref-width="20"/>
+					<vertical pref-width="38">
+						<text id="txt-map-name" pref-width="38" align="Bottom" text="" font-size="4"/>
+						<text id="txt-map-author" pref-width="38" align="Top" text="" font-size="3"/>
+					</vertical>
+				</horizontal>
+				<horizontal pref-height="20" child-expand-height='false' child-expand-width='false'>
+					<text id="txt-map-description" overflow="Truncate" text="" font-size="3"/>
+				</horizontal>
+				<text id="txt-tags" align="Center" text="" font-size="4" bold="true" pref-height="10"/>
+				<text id="txt-meta-data" align="Center" text="" font-size="4" bold="true" pref-height="10"/>
+				<action-button id="btn-play" text="Play" on-click="play" pref-width="30" pref-height="10"/>
+			</vertical>
+		</horizontal>
 	</vertical>
 </bg>
